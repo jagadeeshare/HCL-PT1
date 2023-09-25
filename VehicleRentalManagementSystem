@@ -1,0 +1,410 @@
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+
+class User {
+    private String username;
+    private String password;
+
+    public User(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+    
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+}
+
+class UserManager {
+    private Map<String, User> users = new HashMap<>();
+
+    public void addUser(User user) {
+        users.put(user.getUsername(), user);
+    }
+
+    public User getUserByUsername(String username) {
+        return users.get(username);
+    }
+}
+
+class GPSTracker {
+    private Vehicle currentVehicle;
+
+    public void attachToVehicle(Vehicle vehicle) {
+        currentVehicle = vehicle;
+        System.out.println("GPS tracker attached to vehicle: " + vehicle);
+    }
+
+    public void showVehicleLocation() {
+        if (currentVehicle != null) {
+            System.out.println("Current location of " + currentVehicle + ": Latitude: " + Math.random() * 90 + ", Longitude: " + Math.random() * 180);
+        } else {
+            System.out.println("GPS tracker not attached to any vehicle.");
+        }
+    }
+}
+
+class Feedback {
+    private String vehicleRegNumber;
+    private String feedbackText;
+
+    public Feedback(String vehicleRegNumber, String feedbackText) {
+        this.vehicleRegNumber = vehicleRegNumber;
+        this.feedbackText = feedbackText;
+    }
+
+    public String getVehicleRegNumber() {
+        return vehicleRegNumber;
+    }
+
+    public String getFeedbackText() {
+        return feedbackText;
+    }
+}
+
+class Vehicle {
+    private String regNumber;
+    private String make;
+    private String model;
+    private double dailyRate;
+    private boolean isRented;
+    private Date rentalStartDate;
+    private Date rentalEndDate;
+    private double totalCost;
+    private double totalPayment;
+    private List<Feedback> feedbackList;
+
+    public Vehicle(String regNumber, String make, String model, double dailyRate) {
+        this.regNumber = regNumber;
+        this.make = make;
+        this.model = model;
+        this.dailyRate = dailyRate;
+        this.isRented = false;
+        this.rentalStartDate = null;
+        this.rentalEndDate = null;
+        this.totalCost = 0.0;
+        this.totalPayment = 0.0;
+        this.feedbackList = new ArrayList<>();
+    }
+
+    public String getRegNumber() {
+        return regNumber;
+    }
+
+    public String getMake() {
+        return make;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public double getDailyRate() {
+        return dailyRate;
+    }
+
+    public boolean isRented() {
+        return isRented;
+    }
+
+    public Date getRentalStartDate() {
+        return rentalStartDate;
+    }
+
+    public Date getRentalEndDate() {
+        return rentalEndDate;
+    }
+
+    public double getTotalCost() {
+        return totalCost;
+    }
+
+    public double getTotalPayment() {
+        return totalPayment;
+    }
+
+    public List<Feedback> getFeedbackList() {
+        return feedbackList;
+    }
+
+    public void rent(Date startDate, Date endDate) {
+        isRented = true;
+        rentalStartDate = startDate;
+        rentalEndDate = endDate;
+        calculateTotalCost();
+    }
+
+    public void returnVehicle() {
+        isRented = false;
+        rentalStartDate = null;
+        rentalEndDate = null;
+        totalCost = 0.0;
+    }
+
+    public void makePayment(double amount) {
+        totalPayment += amount;
+    }
+
+    public void calculateTotalCost() {
+        if (rentalStartDate != null && rentalEndDate != null) {
+            long diffInMillies = Math.abs(rentalEndDate.getTime() - rentalStartDate.getTime());
+            int numberOfDays = (int) TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+
+            // Set the daily rates and calculate the total cost
+            if (numberOfDays == 1) {
+                totalCost = dailyRate * numberOfDays;
+            } else if (numberOfDays == 2) {
+                totalCost = 4000.0;
+            } else if (numberOfDays >= 3) {
+                totalCost = 5000.0;
+            }
+        }
+    }
+
+    public void addFeedback(String feedbackText) {
+        Feedback feedback = new Feedback(regNumber, feedbackText);
+        feedbackList.add(feedback);
+    }
+
+    @Override
+    public String toString() {
+        return make + " " + model + " (" + regNumber + ")";
+    }
+}
+
+class RentalSystem {
+    private List<Vehicle> vehicles = new ArrayList<>();
+
+    public void addVehicle(Vehicle vehicle) {
+        vehicles.add(vehicle);
+    }
+
+    public Vehicle findVehicleByRegNumber(String regNumber) {
+        for (Vehicle vehicle : vehicles) {
+            if (vehicle.getRegNumber().equalsIgnoreCase(regNumber)) {
+                return vehicle;
+            }
+        }
+        return null;
+    }
+
+    public void rentVehicle(String regNumber, Date startDate, Date endDate) {
+        Vehicle vehicle = findVehicleByRegNumber(regNumber);
+        if (vehicle != null && !vehicle.isRented()) {
+            vehicle.rent(startDate, endDate);
+            System.out.println("Vehicle " + vehicle + " has been rented from " + formatDate(startDate) + " to " + formatDate(endDate));
+            System.out.println("Rental Cost: $" + vehicle.getTotalCost());
+        } else {
+            System.out.println("Vehicle not found or already rented.");
+        }
+    }
+
+    public void returnVehicle(String regNumber) {
+        Vehicle vehicle = findVehicleByRegNumber(regNumber);
+        if (vehicle != null && vehicle.isRented()) {
+            vehicle.returnVehicle();
+            System.out.println("Vehicle " + vehicle + " has been returned.");
+        } else {
+            System.out.println("Vehicle not found or not currently rented.");
+        }
+    }
+
+    public void makePayment(String regNumber, double amount) {
+        Vehicle vehicle = findVehicleByRegNumber(regNumber);
+        if (vehicle != null && vehicle.isRented()) {
+            vehicle.makePayment(amount);
+            System.out.println("Payment of $" + amount + " has been made for Vehicle " + vehicle);
+            double totalPayment = vehicle.getTotalPayment();
+            double remainingCost = vehicle.getTotalCost() - totalPayment;
+            System.out.println("Total Payment: $" + totalPayment);
+            System.out.println("Remaining Cost: $" + remainingCost);
+        } else {
+            System.out.println("Vehicle not found or not currently rented.");
+        }
+    }
+
+    public void listAvailableVehicles() {
+        System.out.println("Available Vehicles:");
+        for (Vehicle vehicle : vehicles) {
+            if (!vehicle.isRented()) {
+                System.out.println(vehicle);
+            }
+        }
+    }
+
+    public void listRentedVehicles() {
+        System.out.println("Rented Vehicles:");
+        for (Vehicle vehicle : vehicles) {
+            if (vehicle.isRented()) {
+                System.out.println(vehicle + " (Rented from " + formatDate(vehicle.getRentalStartDate()) + " to " + formatDate(vehicle.getRentalEndDate()) + ")");
+            }
+        }
+    }
+
+    private String formatDate(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        return sdf.format(date);
+    }
+
+    public void addFeedback(String regNumber, String feedbackText) {
+        Vehicle vehicle = findVehicleByRegNumber(regNumber);
+        if (vehicle != null) {
+            vehicle.addFeedback(feedbackText);
+            System.out.println("Feedback added for Vehicle " + vehicle + ": " + feedbackText);
+        } else {
+            System.out.println("Vehicle not found.");
+        }
+    }
+
+    public List<Feedback> getFeedbackForVehicle(String regNumber) {
+        Vehicle vehicle = findVehicleByRegNumber(regNumber);
+        if (vehicle != null) {
+            return vehicle.getFeedbackList();
+        } else {
+            System.out.println("Vehicle not found.");
+            return new ArrayList<>();
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        UserManager userManager = new UserManager();
+        userManager.addUser(new User("jaggu", "jaggu123"));
+
+        Scanner scanner = new Scanner(System.in);
+        String username, password;
+        boolean isAuthenticated = false;
+
+        do {
+            System.out.print("Enter username: ");
+            username = scanner.nextLine();
+            System.out.print("Enter password: ");
+            password = scanner.nextLine();
+
+            User user = userManager.getUserByUsername(username);
+            if (user != null && user.getPassword().equals(password)) {
+                isAuthenticated = true;
+                System.out.println("Login successful.");
+            } else {
+                System.out.println("Invalid credentials. Please try again.");
+            }
+        } while (!isAuthenticated);
+
+
+        RentalSystem rentalSystem = new RentalSystem();
+        GPSTracker gpsTracker = new GPSTracker();
+
+        rentalSystem.addVehicle(new Vehicle("ABC123", "Toyota", "Camry", 50.0));
+        rentalSystem.addVehicle(new Vehicle("XYZ789", "Honda", "Civic", 45.0));
+        rentalSystem.addVehicle(new Vehicle("DEF456", "Ford", "Focus", 40.0));
+        
+        int choice;
+
+        do {
+            System.out.println("\nMenu:");
+            System.out.println("1. Rent Vehicle");
+            System.out.println("2. Return Vehicle");
+            System.out.println("3. List Available Vehicles");
+            System.out.println("4. List Rented Vehicles");
+            System.out.println("5. Make Payment");
+            System.out.println("6. Attach GPS Tracker to Vehicle");
+            System.out.println("7. Show Vehicle Location (GPS)");
+            System.out.println("8. Add Feedback");
+            System.out.println("9. View Feedback");
+            System.out.println("10. Exit");
+            System.out.print("Enter your choice: ");
+            choice = scanner.nextInt();
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter the registration number of the vehicle to rent: ");
+                    scanner.nextLine(); // Consume newline
+                    String regToRent = scanner.nextLine();
+                    System.out.print("Enter the rental start date (yyyy-MM-dd): ");
+                    String startDateStr = scanner.next();
+                    System.out.print("Enter the rental end date (yyyy-MM-dd): ");
+                    String endDateStr = scanner.next();
+
+                    try {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                        Date startDate = sdf.parse(startDateStr);
+                        Date endDate = sdf.parse(endDateStr);
+                        rentalSystem.rentVehicle(regToRent, startDate, endDate);
+                    } catch (Exception e) {
+                        System.out.println("Invalid date format. Please use yyyy-MM-dd.");
+                    }
+                    break;
+                case 2:
+                    System.out.print("Enter the registration number of the vehicle to return: ");
+                    scanner.nextLine(); // Consume newline
+                    String regToReturn = scanner.nextLine();
+                    rentalSystem.returnVehicle(regToReturn);
+                    break;
+                case 3:
+                    rentalSystem.listAvailableVehicles();
+                    break;
+                case 4:
+                    rentalSystem.listRentedVehicles();
+                    break;
+                case 5:
+                    System.out.print("Enter the registration number of the vehicle to make payment for: ");
+                    scanner.nextLine(); // Consume newline
+                    String regToPay = scanner.nextLine();
+                    System.out.print("Enter the payment amount: $");
+                    double paymentAmount = scanner.nextDouble();
+                    rentalSystem.makePayment(regToPay, paymentAmount);
+                    break;
+                case 6:
+                    System.out.print("Enter the registration number of the vehicle to attach GPS tracker: ");
+                    scanner.nextLine(); // Consume newline
+                    String regToAttachGPS = scanner.nextLine();
+                    Vehicle vehicleToAttachGPS = rentalSystem.findVehicleByRegNumber(regToAttachGPS);
+                    if (vehicleToAttachGPS != null) {
+                        gpsTracker.attachToVehicle(vehicleToAttachGPS);
+                    } else {
+                        System.out.println("Vehicle not found.");
+                    }
+                    break;
+                case 7:
+                    gpsTracker.showVehicleLocation();
+                    break;
+                case 8:
+                    System.out.print("Enter the registration number of the vehicle to add feedback for: ");
+                    scanner.nextLine(); // Consume newline
+                    String regToAddFeedback = scanner.nextLine();
+                    System.out.print("Enter feedback: ");
+                    String feedbackText = scanner.nextLine();
+                    rentalSystem.addFeedback(regToAddFeedback, feedbackText);
+                    break;
+                case 9:
+                    System.out.print("Enter the registration number of the vehicle to view feedback: ");
+                    scanner.nextLine(); // Consume newline
+                    String regToViewFeedback = scanner.nextLine();
+                    List<Feedback> feedbackList = rentalSystem.getFeedbackForVehicle(regToViewFeedback);
+                    System.out.println("Feedback for Vehicle " + regToViewFeedback + ":");
+                    for (Feedback feedback : feedbackList) {
+                        System.out.println(feedback.getFeedbackText());
+                    }
+                    break;
+                case 10:
+                    System.out.println("Exiting...");
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+                    break;
+            }
+
+        } while (choice != 10);
+    }
+}
